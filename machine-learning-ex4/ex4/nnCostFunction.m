@@ -21,7 +21,6 @@ Theta1 = reshape(nn_params(1:hidden_layer_size * (input_layer_size + 1)), ...
 
 Theta2 = reshape(nn_params((1 + (hidden_layer_size * (input_layer_size + 1))):end), ...
                  num_labels, (hidden_layer_size + 1));
-
 % Setup some useful variables
 m = size(X, 1);
          
@@ -62,8 +61,55 @@ end
 %         Hint: We recommend implementing backpropagation using a for-loop
 %               over the training examples if you are implementing it for the 
 %               first time.
+for t = 1:m
+	% Step 1 - Input Values
+	a1 = [1; X(t, :)']; % Including Bias
+	z2 = Theta1 * a1;
+	a2 = [1; sigmoid(z2)]; % Including Bias
 
+	z3 = Theta2 * a2;
+	a3 = sigmoid(z3);
 
+	% Step 2 - Delta Output Layer
+    this_y = zeros(num_labels, 1);
+    this_y(y(t)) = 1;
+    d3 = a3 - this_y;
+	
+	% Step 3 - Delta Hidden Layer
+    d2 = (Theta2(:, 2:end)' * d3) .* sigmoidGradient(z2);
+
+	% Step 4 - Accumulate
+	Theta1_grad += (d2 * a1');
+	Theta2_grad += (d3 * a2');
+end
+
+Theta1_grad = Theta1_grad / m;
+Theta2_grad = Theta2_grad / m;
+
+Theta1_grad(:, 2:end) += Theta1(:, 2:end) * lambda / m;
+Theta2_grad(:, 2:end) += Theta2(:, 2:end) * lambda / m;
+
+% for i = 1:m 
+%     a2 = sigmoid([1 X(i, :)] * Theta1');
+%     a3 = sigmoid([1 a2] * Theta2');
+% 
+%     a2 = a2';
+%     a3 = a3';
+% 
+%     this_y = zeros(num_labels, 1);
+%     this_y(y(i)) = 1;
+% 
+%     delta3 = a3 .- this_y;
+%     
+%     g_z2 = sigmoidGradient([1 X(i, :)] * Theta1');
+%     Theta2_t = Theta2(:, 2:end);
+% 
+%     delta2 = Theta2_t' * delta3 .* g_z2';
+%     %delta2 = delta2(2: end);
+% 
+%     Theta1_grad = Theta1_grad .+ delta2 * [1 X(i, :)];
+%     Theta2_grad = Theta2_grad .+ delta3 * [1; a2]';
+% end
 
 % Part 3: Implement regularization with the cost function and gradients.
 %
@@ -87,11 +133,6 @@ for i = 1:size(Theta2, 1)
 end
 
 J += J_reg * lambda / 2 / m;
-
-
-
-
-
 
 % -------------------------------------------------------------
 
